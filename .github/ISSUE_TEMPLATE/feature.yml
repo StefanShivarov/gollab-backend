@@ -1,0 +1,31 @@
+name: Feature
+title: "[Feature]: "
+labels: feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Description
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: "Provide a detailed description of the feature"
+      placeholder: "Describe the feature here"
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Completion criteria
+
+  - type: checkboxes
+    id: done
+    attributes:
+      label: "The following should be done:"
+      options:
+        - label: Feature implemented
+        - label: Unit tests added (if applicable)
+        - label: Pull request opened
+        - label: Pull request merged
