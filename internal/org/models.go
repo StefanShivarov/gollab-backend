@@ -17,7 +17,7 @@ type User struct {
 	Email        string   `gorm:"type:varchar(50);uniqueIndex;not null"`
 	Name         string   `gorm:"type:varchar(50);uniqueIndex;not null"`
 	PasswordHash string   `gorm:"type:varchar(150);not null"`
-	Role         UserRole `gorm:"type:varchar(20);not null;check:role IN ('admin', 'standard')"`
+	Role         UserRole `gorm:"type:varchar(20);not null;default:'standard';check:role IN ('admin', 'standard')"`
 }
 
 type TeamRole string
@@ -39,5 +39,5 @@ type Membership struct {
 	User   User      `gorm:"foreignKey:UserID"`
 	TeamID uuid.UUID `gorm:"type:uuid;not null;index;uniqueIndex:idx_user_team_membership"`
 	Team   Team      `gorm:"foreignKey:TeamID"`
-	Role   TeamRole  `gorm:"type:varchar(20);not null;check: role IN ('project_manager', 'developer')"`
+	Role   TeamRole  `gorm:"type:varchar(20);not null;default:'developer';check: role IN ('project_manager', 'developer')"`
 }

@@ -7,13 +7,16 @@ import (
 
 	"github.com/StefanShivarov/gollab-backend/internal/config"
 	"github.com/StefanShivarov/gollab-backend/internal/db"
+	"github.com/StefanShivarov/gollab-backend/internal/org"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 )
 
 type Application struct {
-	Config config.Config
-	DB     *gorm.DB
+	Config      config.Config
+	DB          *gorm.DB
+	UserHandler *org.UserHandler
 }
 
 func NewApplication(cfg config.Config) (*Application, error) {
@@ -26,27 +29,19 @@ func NewApplication(cfg config.Config) (*Application, error) {
 		return nil, err
 	}
 
+	v := validator.New()
+	userHandler := org.NewUserHandler(org.NewUserService(org.NewUserRepository(gormDB), v))
+
 	return &Application{
-		Config: cfg,
-		DB:     gormDB,
+		Config:      cfg,
+		DB:          gormDB,
+		UserHandler: userHandler,
 	}, nil
 }
 
 func (app *Application) Routes() http.Handler {
 	router := chi.NewRouter()
-
-	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		sqlDb, err := app.DB.DB()
-		status := "ok"
-		if err != nil || sqlDb.Ping() != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			status = "unhealthy"
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"status": "` + status + `"}`))
-	})
-
+	org.Routes(router, app.UserHandler)
 	return router
 }
 
