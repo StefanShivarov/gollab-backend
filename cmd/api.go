@@ -22,6 +22,10 @@ func NewApplication(cfg config.Config) (*Application, error) {
 		return nil, err
 	}
 
+	if err := db.PerformMigration(gormDB); err != nil {
+		return nil, err
+	}
+
 	return &Application{
 		Config: cfg,
 		DB:     gormDB,
