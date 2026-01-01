@@ -12,11 +12,11 @@ import (
 )
 
 type UserService struct {
-	Repo      *UserRepository
+	Repo      UserRepository
 	Validator *validator.Validate
 }
 
-func NewUserService(repo *UserRepository, validator *validator.Validate) *UserService {
+func NewUserService(repo UserRepository, validator *validator.Validate) *UserService {
 	return &UserService{
 		Repo:      repo,
 		Validator: validator,
@@ -116,12 +116,12 @@ func (s *UserService) List(page, size int) (*common.PaginatedResponse[UserRespon
 }
 
 type TeamService struct {
-	Repo        *TeamRepository
+	Repo        TeamRepository
 	UserService *UserService
 	Validator   *validator.Validate
 }
 
-func NewTeamService(repo *TeamRepository, userService *UserService, validator *validator.Validate) *TeamService {
+func NewTeamService(repo TeamRepository, userService *UserService, validator *validator.Validate) *TeamService {
 	return &TeamService{
 		Repo:        repo,
 		UserService: userService,
@@ -257,35 +257,5 @@ func (s *TeamService) ListMembers(teamID uuid.UUID) ([]MemberResponse, error) {
 		return nil, err
 	}
 
-	if len(memberships) == 0 {
-		return []MemberResponse{}, nil
-	}
-
-	userIds := make([]uuid.UUID, 0, len(memberships))
-	for _, m := range memberships {
-		userIds = append(userIds, m.UserID)
-	}
-
-	var users []User
-	if err := s.Repo.DB.Where("id IN ?", userIds).Find(&users).Error; err != nil {
-		return nil, err
-	}
-
-	userMap := make(map[uuid.UUID]User, len(users))
-	for _, u := range users {
-		userMap[u.ID] = u
-	}
-
-	res := make([]MemberResponse, len(memberships))
-	for i, m := range memberships {
-		user := userMap[m.UserID]
-		res[i] = MemberResponse{
-			ID:    user.ID,
-			Name:  user.Name,
-			Email: user.Email,
-			Role:  m.Role,
-		}
-	}
-
-	return res, nil
+	return memberships, nil
 }
