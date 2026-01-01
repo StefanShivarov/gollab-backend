@@ -14,9 +14,9 @@ import (
 )
 
 type Application struct {
-	Config      config.Config
-	DB          *gorm.DB
-	UserHandler *org.UserHandler
+	Config    config.Config
+	DB        *gorm.DB
+	Validator *validator.Validate
 }
 
 func NewApplication(cfg config.Config) (*Application, error) {
@@ -29,19 +29,25 @@ func NewApplication(cfg config.Config) (*Application, error) {
 		return nil, err
 	}
 
-	v := validator.New()
-	userHandler := org.NewUserHandler(org.NewUserService(org.NewUserRepository(gormDB), v))
-
 	return &Application{
-		Config:      cfg,
-		DB:          gormDB,
-		UserHandler: userHandler,
+		Config:    cfg,
+		DB:        gormDB,
+		Validator: validator.New(),
 	}, nil
+}
+
+func (app *Application) mountRoutes(r chi.Router) {
+	userService := org.NewUserService(org.NewUserRepository(app.DB), app.Validator)
+	userHandler := org.NewUserHandler(userService)
+	teamHandler := org.NewTeamHandler(org.NewTeamService(org.NewTeamRepository(app.DB), userService, app.Validator))
+
+	org.UserRoutes(r, userHandler)
+	org.TeamRoutes(r, teamHandler)
 }
 
 func (app *Application) Routes() http.Handler {
 	router := chi.NewRouter()
-	org.Routes(router, app.UserHandler)
+	app.mountRoutes(router)
 	return router
 }
 
