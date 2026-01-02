@@ -32,18 +32,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-and-unit-test]
     steps:
-      - name: Download code
-        uses: actions/download-artifact@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          name: code
-          path: .
+          fetch-depth: 0
       - name: Run Linter
         uses: super-linter/super-linter/slim@v7
         env:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DISABLE_ERRORS: true
-          DISABLE_GIT: true
 
   build-docker-image:
     name: Build Docker image
@@ -54,10 +52,6 @@ jobs:
     env:
       REPO_OWNER: ${{ github.repository_owner }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Download code
         uses: actions/download-artifact@v4
         with:
