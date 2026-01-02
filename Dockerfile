@@ -6,7 +6,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN ["go", "build", "-o", "gollab-backend", "./cmd"]
+RUN ["go", "build", "-buildvcs=false", "-o", "gollab-backend", "./cmd"]
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*

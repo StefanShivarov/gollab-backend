@@ -7,4 +7,4 @@ go mod download
 
 echo "Building Go application..."
 mkdir -p bin
-go build -o bin/myapp ./cmd
+go build -buildvcs=false -o bin/myapp ./cmd
