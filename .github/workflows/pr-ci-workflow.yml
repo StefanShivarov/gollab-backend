@@ -43,6 +43,7 @@ jobs:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DISABLE_ERRORS: true
+          DISABLE_GIT: true
 
   build-docker-image:
     name: Build Docker image
@@ -50,22 +51,25 @@ jobs:
     needs: [build-and-unit-test]
     permissions:
       packages: write
+    env:
+      REPO_OWNER: ${{ github.repository_owner }}
     steps:
       - name: Download code
         uses: actions/download-artifact@v4
         with:
           name: code
           path: .
+      - name: Set lower-case repository owner
+        run: echo "OWNER_LC=${REPO_OWNER,,}" >> $GITHUB_ENV
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ env.OWNER_LC }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.actor }}/gollab-backend:ci-${{ github.sha }}
+          tags: ghcr.io/${{ env.OWNER_LC }}/gollab-backend:ci-${{ github.sha }}
