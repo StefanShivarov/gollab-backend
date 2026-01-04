@@ -1,10 +1,8 @@
 name: CD Workflow
 
 on:
-  workflow_run:
-    workflows: ["Pull Request CI Workflow"]
-    types:
-      - completed
+  push:
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -20,9 +18,36 @@ env:
   K8S_NAMESPACE: gollab-demo-namespace
 
 jobs:
+  push-docker-image:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    env:
+      REPO_OWNER: ${{ github.repository_owner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set lower-case repository owner
+        run: echo "OWNER_LC=${REPO_OWNER,,}" >> $GITHUB_ENV
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ env.OWNER_LC }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Docker image to GHCR
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ env.OWNER_LC }}/gollab-backend:${{ github.sha }}
+
   k8s-deploy:
     name: Deploy to Kubernetes
-    if: ${{ github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,6 +58,9 @@ jobs:
         with:
           cluster_name: gollab-cluster
           wait: 60s
+
+      - name: Create namespace in cluster
+        run: kubectl apply -f k8s/namespace.yaml
 
       - name: Create Postgres secret in Kubernetes
         run: |
@@ -53,10 +81,10 @@ jobs:
           IMAGE=${{ env.REGISTRY }}/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           kubectl set image deployment/${{ env.K8S_DEPLOYMENT_NAME }} ${{ env.K8S_CONTAINER_NAME }}=$IMAGE -n ${{ env.K8S_NAMESPACE }}
 
-      - name: Rollout
+      - name: Wait for Deployment Rollout
         run: kubectl rollout status deployment/${{ env.K8S_DEPLOYMENT_NAME }} -n ${{ env.K8S_NAMESPACE }} --timeout=60s
 
-      - name: Test API
+      - name: Smoke Tests
         run: |
           set -euo pipefail
           
@@ -68,7 +96,7 @@ jobs:
           echo "Calling /health endpoint..."
           curl -i -s $API_URL/health
           
-      - name: Failure logs and events
+      - name: Debug Deployment Failure
         if: failure()
         run: |
           echo "Deployment failed!"
