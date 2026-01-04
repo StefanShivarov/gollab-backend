@@ -3,6 +3,9 @@ set -euo pipefail
 
 CLUSTER_NAME="gollab-cluster"
 NAMESPACE="gollab-demo-namespace"
+KIND_CONFIG_PATH="../../k8s/overlays/kind/kind-config.yaml"
+NAMESPACE_CONFIG_PATH="../../k8s/base/namespace.yaml"
+KIND_KUSTOMIZATION_CONFIG_PATH="../../k8s/overlays/kind"
 
 # ---------------------------
 # 1. Create kind cluster if not exists
@@ -11,7 +14,7 @@ if kind get clusters | grep -q "^${CLUSTER_NAME}$"; then
   echo "Kind cluster '${CLUSTER_NAME}' already exists. Skipping creation..."
 else
   echo "Creating kind cluster '${CLUSTER_NAME}'..."
-  kind create cluster --name "$CLUSTER_NAME" --config k8s/overlays/kind/kind-config.yaml
+  kind create cluster --name "$CLUSTER_NAME" --config "$KIND_CONFIG_PATH"
 fi
 
 # ---------------------------
@@ -21,7 +24,7 @@ if kubectl get ns "$NAMESPACE" >/dev/null 2>&1; then
   echo "Namespace '$NAMESPACE' already exists. Skipping..."
 else
   echo "Creating namespace '$NAMESPACE'..."
-  kubectl apply -f k8s/base/namespace.yaml
+  kubectl apply -f "$NAMESPACE_CONFIG_PATH"
 fi
 
 # ---------------------------
@@ -37,7 +40,7 @@ kubectl create secret generic postgres-credentials \
 # 4. Apply k8s resources via Kustomize
 # ---------------------------
 echo "Applying Kubernetes resources..."
-kubectl apply -k ../../k8s/overlays/kind
+kubectl apply -k "$KIND_KUSTOMIZATION_CONFIG_PATH"
 
 # ---------------------------
 # 5. Wait for deployments
