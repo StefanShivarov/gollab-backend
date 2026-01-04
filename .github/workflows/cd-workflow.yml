@@ -95,7 +95,7 @@ jobs:
           API_URL="http://localhost:30080"
           
           echo "Waiting for /health endpoint..."
-          timeout 30s bash -c "until curl -sf $API_URL/health > /dev/null; do sleep 2; done"
+          timeout 30s bash -c "until curl -f $API_URL/health > /dev/null; do sleep 2; done"
           
           echo "Calling /health endpoint..."
           curl -i -s $API_URL/health
