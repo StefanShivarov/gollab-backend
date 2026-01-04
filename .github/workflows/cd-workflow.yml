@@ -48,6 +48,7 @@ jobs:
 
   k8s-deploy:
     name: Deploy to Kubernetes
+    needs: [push-docker-image]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
