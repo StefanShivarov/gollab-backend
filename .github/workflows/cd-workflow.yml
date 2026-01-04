@@ -60,7 +60,7 @@ jobs:
           wait: 60s
 
       - name: Create namespace in cluster
-        run: kubectl apply -f k8s/namespace.yaml
+        run: kubectl apply -f k8s/base/namespace.yaml
 
       - name: Create Postgres secret in Kubernetes
         run: |
