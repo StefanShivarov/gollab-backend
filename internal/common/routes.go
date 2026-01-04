@@ -19,6 +19,8 @@ func HealthRoute(r chi.Router, db *gorm.DB) {
 			})
 			return
 		}
-		WriteJSON(w, http.StatusOK, []byte(`{"status":"ok"}`))
+		WriteJSON(w, http.StatusOK, map[string]string{
+			"status": "ok",
+		})
 	})
 }
