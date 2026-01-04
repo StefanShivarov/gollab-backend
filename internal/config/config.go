@@ -12,17 +12,20 @@ type Config struct {
 	DBPass    string
 	DBName    string
 	DBSSLMode string
+	ApiPort   int
 }
 
 func Load() Config {
-	port, _ := strconv.Atoi(getEnv("GOLLAB_DB_PORT", "5432"))
+	dbPort, _ := strconv.Atoi(getEnv("DB_PORT", "5432"))
+	apiPort, _ := strconv.Atoi(getEnv("GOLLAB_API_PORT", "8080"))
 	return Config{
-		DBHost:    getEnv("GOLLAB_DB_HOST", "localhost"),
-		DBPort:    port,
-		DBUser:    getEnv("GOLLAB_DB_USERNAME", "postgres"),
-		DBPass:    getEnv("GOLLAB_DB_PASS", "postgres"),
-		DBName:    getEnv("GOLLAB_DB_NAME", "gollab_db"),
-		DBSSLMode: getEnv("GOLLAB_DB_SSL_MODE", "disable"),
+		DBHost:    getEnv("DB_HOST", "localhost"),
+		DBPort:    dbPort,
+		DBUser:    getEnv("DB_USER", "postgres"),
+		DBPass:    getEnv("DB_PASS", "postgres"),
+		DBName:    getEnv("DB_NAME", "gollab_db"),
+		DBSSLMode: getEnv("DB_SSL_MODE", "disable"),
+		ApiPort:   apiPort,
 	}
 }
 
