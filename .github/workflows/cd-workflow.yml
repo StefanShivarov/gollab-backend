@@ -93,14 +93,19 @@ jobs:
         run: |
           set -euo pipefail
           
+          kubectl port-forward service/gollab-backend 30080:80 -n ${{ env.K8S_NAMESPACE }} &
+          PF_PID=$!
+          echo "Port-forwarding..."
+          trap 'kill $PF_PID || true' EXIT
+          sleep 5
           API_URL="http://localhost:30080"
           
           echo "Waiting for /health endpoint..."
-          timeout 30s bash -c "until curl -f $API_URL/health > /dev/null; do sleep 2; done"
+          timeout 30s bash -c "until curl -sf --show-error $API_URL/health > /dev/null; do sleep 2; done"
           
           echo "Calling /health endpoint..."
-          curl -i -s $API_URL/health
-          
+          curl -i -s --show-error $API_URL/health
+
       - name: Debug Deployment Failure
         if: failure()
         run: |

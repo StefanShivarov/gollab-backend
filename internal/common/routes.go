@@ -1,6 +1,7 @@
 package common
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -9,6 +10,7 @@ import (
 
 func HealthRoute(r chi.Router, db *gorm.DB) {
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Health endpoint called.")
 		db, err := db.DB()
 		if err != nil || db.Ping() != nil {
 			WriteError(w, &ApiError{
