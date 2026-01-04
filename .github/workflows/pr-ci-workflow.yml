@@ -1,4 +1,4 @@
-name: Pull Request CI Workflow
+name: CI Workflow
 
 on:
   push:
@@ -77,4 +77,3 @@ jobs:
         with:
           context: .
           push: false
-          tags: ghcr.io/${{ env.OWNER_LC }}/gollab-backend:${{ github.sha }}
