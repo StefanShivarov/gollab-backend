@@ -1,6 +1,10 @@
 package main
 
-import "github.com/StefanShivarov/gollab-backend/internal/config"
+import (
+	"fmt"
+
+	"github.com/StefanShivarov/gollab-backend/internal/config"
+)
 
 func main() {
 	cfg := config.Load()
@@ -10,5 +14,5 @@ func main() {
 		panic(err)
 	}
 
-	app.Run(":8080")
+	app.Run(fmt.Sprintf(":%d", cfg.ApiPort))
 }

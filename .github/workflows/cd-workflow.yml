@@ -1,0 +1,85 @@
+name: CD Workflow
+
+on:
+  workflow_run:
+    workflows: ["Pull Request CI Workflow"]
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REPO_OWNER: ${{ github.repository_owner }}
+  REGISTRY: ghcr.io
+  IMAGE_NAME: gollab-backend
+  K8S_DEPLOYMENT_NAME: gollab-backend
+  K8S_CONTAINER_NAME: gollab-backend
+  K8S_NAMESPACE: gollab-demo-namespace
+
+jobs:
+  k8s-deploy:
+    name: Deploy to Kubernetes
+    if: ${{ github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: gollab-cluster
+          wait: 60s
+
+      - name: Create Postgres secret in Kubernetes
+        run: |
+          kubectl create secret generic postgres-credentials \
+            --from-literal=POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
+            --from-literal=POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
+            --from-literal=POSTGRES_DB=gollab_db \
+            -n ${{ env.K8S_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Apply all resources via Kustomize (kind overlay)
+        run: kubectl apply -k k8s/overlays/kind
+
+      - name: Set lower-case repository owner
+        run: echo "OWNER_LC=${REPO_OWNER,,}" >> $GITHUB_ENV
+
+      - name: Set image from commit sha
+        run: |
+          IMAGE=${{ env.REGISTRY }}/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          kubectl set image deployment/${{ env.K8S_DEPLOYMENT_NAME }} ${{ env.K8S_CONTAINER_NAME }}=$IMAGE -n ${{ env.K8S_NAMESPACE }}
+
+      - name: Rollout
+        run: kubectl rollout status deployment/${{ env.K8S_DEPLOYMENT_NAME }} -n ${{ env.K8S_NAMESPACE }} --timeout=60s
+
+      - name: Test API
+        run: |
+          set -euo pipefail
+          
+          API_URL="http://localhost:30080"
+          
+          echo "Waiting for /health endpoint..."
+          timeout 20s bash -c "until curl -sf $API_URL/health > /dev/null; do sleep 2; done"
+          
+          echo "Calling /health endpoint..."
+          curl -i -s $API_URL/health
+          
+      - name: Failure logs and events
+        if: failure()
+        run: |
+          echo "Deployment failed!"
+          echo "Pods:"
+          kubectl get pods -n ${{ env.K8S_NAMESPACE }} -o wide
+
+          echo "Pod logs:"
+          kubectl logs -l app=${{ env.K8S_CONTAINER_NAME }} -n ${{ env.K8S_NAMESPACE }} --tail=100 || true
+  
+          echo "Events:"
+          kubectl get events -n ${{ env.K8S_NAMESPACE }} --sort-by=.metadata.creationTimestamp | tail -n 15
+
+          echo "Deployment:"
+          kubectl describe deployment/${{ env.K8S_DEPLOYMENT_NAME }} -n ${{ env.K8S_NAMESPACE }} || true

@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/StefanShivarov/gollab-backend/internal/common"
 	"github.com/StefanShivarov/gollab-backend/internal/config"
 	"github.com/StefanShivarov/gollab-backend/internal/db"
 	"github.com/StefanShivarov/gollab-backend/internal/org"
@@ -41,6 +42,7 @@ func (app *Application) mountRoutes(r chi.Router) {
 	userHandler := org.NewUserHandler(userService)
 	teamHandler := org.NewTeamHandler(org.NewTeamService(org.NewTeamRepository(app.DB), userService, app.Validator))
 
+	common.HealthRoute(r, app.DB)
 	org.UserRoutes(r, userHandler)
 	org.TeamRoutes(r, teamHandler)
 }
