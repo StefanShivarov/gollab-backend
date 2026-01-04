@@ -81,8 +81,12 @@ jobs:
           IMAGE=${{ env.REGISTRY }}/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           kubectl set image deployment/${{ env.K8S_DEPLOYMENT_NAME }} ${{ env.K8S_CONTAINER_NAME }}=$IMAGE -n ${{ env.K8S_NAMESPACE }}
 
-      - name: Wait for Deployment Rollout
-        run: kubectl rollout status deployment/${{ env.K8S_DEPLOYMENT_NAME }} -n ${{ env.K8S_NAMESPACE }} --timeout=60s
+      - name: Wait for Deployment to be ready
+        run: |
+          echo "Waiting for rollout..."
+          kubectl rollout status deployment/${{ env.K8S_DEPLOYMENT_NAME }} -n ${{ env.K8S_NAMESPACE }} --timeout=60s
+          echo "Ensuring pods are available..."
+          kubectl wait --for=condition=available deployment/${{ env.K8S_DEPLOYMENT_NAME }} -n ${{ env.K8S_NAMESPACE }} --timeout=120s
 
       - name: Smoke Tests
         run: |
@@ -91,7 +95,7 @@ jobs:
           API_URL="http://localhost:30080"
           
           echo "Waiting for /health endpoint..."
-          timeout 20s bash -c "until curl -sf $API_URL/health > /dev/null; do sleep 2; done"
+          timeout 30s bash -c "until curl -sf $API_URL/health > /dev/null; do sleep 2; done"
           
           echo "Calling /health endpoint..."
           curl -i -s $API_URL/health
