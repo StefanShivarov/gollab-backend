@@ -100,7 +100,7 @@ jobs:
           echo "Running Flyway validate..."
           docker run --rm \
             -v ${{ github.workspace }}/db/migrations:/flyway/sql \
-            --add-host=host.docker.internal:host-gateway
+            --add-host=host.docker.internal:host-gateway \
             -e FLYWAY_URL=jdbc:postgresql://host.docker.internal:5432/gollab_db \
             -e FLYWAY_USER=${{ secrets.POSTGRES_USER }} \
             -e FLYWAY_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
@@ -109,7 +109,7 @@ jobs:
           echo "Running Flyway migrate..."
           docker run --rm \
             -v ${{ github.workspace }}/db/migrations:/flyway/sql \
-            --add-host=host.docker.internal:host-gateway
+            --add-host=host.docker.internal:host-gateway \
             -e FLYWAY_URL=jdbc:postgresql://host.docker.internal:5432/gollab_db \
             -e FLYWAY_USER=${{ secrets.POSTGRES_USER }} \
             -e FLYWAY_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
