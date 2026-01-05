@@ -1,0 +1,4 @@
+namespace: gollab-demo-namespace
+resources:
+  - deployment.yaml
+  - service.yaml

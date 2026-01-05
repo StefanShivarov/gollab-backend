@@ -1,5 +1,0 @@
-namespace: gollab-demo-namespace
-resources:
-  - ../../../base/postgres-pvc.yaml
-  - ../../../base/postgres-deployment.yaml
-  - ../../../base/postgres-service.yaml
