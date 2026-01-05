@@ -77,11 +77,55 @@ jobs:
             --from-literal=POSTGRES_DB=gollab_db \
             -n ${{ env.K8S_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Apply all resources via Kustomize (kind overlay)
-        run: kubectl apply -k k8s/overlays/kind
+      - name: Apply Postgres resources
+        run: kubectl apply -k k8s/overlays/kind/postgres
 
-      - name: Set lower-case repository owner
-        run: echo "OWNER_LC=${REPO_OWNER,,}" >> $GITHUB_ENV
+      - name: Wait for Postgres to be ready
+        run: |
+          echo "Waiting for Postgres pod to be ready..."
+          kubectl wait --for=condition=ready pod -l app=gollab-postgres -n ${{ env.K8S_NAMESPACE }} --timeout=120s
+
+      - name: Run Flyway migrations
+        run: |
+          set -euo pipefail
+          
+          kubectl port-forward svc/gollab-postgres-service 5432:5432 -n ${{ env.K8S_NAMESPACE }} &
+          PF_PID=$!
+          
+          cleanup() {
+            kill $PF_PID || true
+          }
+          trap cleanup EXIT
+  
+          for i in {1..30}; do
+            if nc -z localhost 5432; then
+              echo "Postgres is reachable"
+              break
+            fi
+            sleep 1
+          done
+          
+          if ! nc -z localhost 5432; then
+            echo "ERROR: Postgres did not become reachable via port-forward"
+            exit 1
+          fi
+          
+          echo "Running Flyway migrations..."
+          docker run --rm \
+            -v ${{ github.workspace }}/db/migrations:/flyway/sql \
+            -e FLYWAY_URL=jdbc:postgresql://localhost:5432/gollab_db \
+            -e FLYWAY_USER=${{ secrets.POSTGRES_USER }} \
+            -e FLYWAY_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
+            -e FLYWAY_CONNECT_RETRIES=10 \
+            flyway/flyway:9.20.0 \
+            sh -c "flyway validate && flyway migrate"
+  
+
+      - name: Apply Backend resources
+        run: kubectl apply -k k8s/overlays/kind/backend
+
+#      - name: Set lower-case repository owner
+#        run: echo "OWNER_LC=${REPO_OWNER,,}" >> $GITHUB_ENV
 
 #      - name: Set image from commit sha
 #        run: |
