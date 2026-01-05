@@ -96,7 +96,7 @@ jobs:
           done
           
           echo "Starting port-forward..."
-          kubectl port-forward -n ${{ env.K8S_NAMESPACE }} svc/gollab-postgres-service 127.0.0.1:5432:5432 >/tmp/pf.log 2>&1 &
+          kubectl port-forward --address 127.0.0.1 -n ${{ env.K8S_NAMESPACE }} svc/gollab-postgres-service 5432:5432 >/tmp/pf.log 2>&1 &
           PF_PID=$!
           cleanup() { kill $PF_PID || true; }
           trap cleanup EXIT
