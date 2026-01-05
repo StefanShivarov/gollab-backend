@@ -3,10 +3,10 @@ set -euo pipefail
 
 CLUSTER_NAME="gollab-cluster"
 NAMESPACE="gollab-demo-namespace"
-KIND_CONFIG_PATH="../../k8s/overlays/kind/kind-config.yaml"
-NAMESPACE_CONFIG_PATH="../../k8s/base/namespace.yaml"
-POSTGRES_KUSTOMIZATION_PATH="../../k8s/overlays/kind/postgres"
-BACKEND_KUSTOMIZATION_PATH="../../k8s/overlays/kind/backend"
+KIND_CONFIG_PATH="../../k8s/kind-config.yaml"
+NAMESPACE_CONFIG_PATH="../../k8s/namespace.yaml"
+POSTGRES_KUSTOMIZATION_PATH="../../k8s/postgres"
+BACKEND_KUSTOMIZATION_PATH="../../k8s/backend"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MIGRATIONS_PATH="$SCRIPT_DIR/../../db/migrations"
 

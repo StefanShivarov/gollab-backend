@@ -63,11 +63,11 @@ jobs:
         uses: helm/kind-action@v1
         with:
           cluster_name: gollab-cluster
-          config: k8s/overlays/kind/kind-config.yaml
+          config: k8s/kind-config.yaml
           wait: 60s
 
       - name: Create namespace in cluster
-        run: kubectl apply -f k8s/base/namespace.yaml
+        run: kubectl apply -f k8s/namespace.yaml
 
       - name: Create Postgres secret in Kubernetes
         run: |
@@ -78,7 +78,7 @@ jobs:
             -n ${{ env.K8S_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Apply Postgres resources
-        run: kubectl apply -k k8s/overlays/kind/postgres
+        run: kubectl apply -k k8s/postgres
 
       - name: Wait for Postgres to be ready
         run: |
@@ -122,7 +122,7 @@ jobs:
   
 
       - name: Apply Backend resources
-        run: kubectl apply -k k8s/overlays/kind/backend
+        run: kubectl apply -k k8s/backend
 
 #      - name: Set lower-case repository owner
 #        run: echo "OWNER_LC=${REPO_OWNER,,}" >> $GITHUB_ENV
