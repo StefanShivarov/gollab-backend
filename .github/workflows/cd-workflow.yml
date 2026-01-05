@@ -96,24 +96,12 @@ jobs:
             kill $PF_PID || true
           }
           trap cleanup EXIT
-  
-          for i in {1..30}; do
-            if nc -z localhost 5432; then
-              echo "Postgres is reachable"
-              break
-            fi
-            sleep 1
-          done
-          
-          if ! nc -z localhost 5432; then
-            echo "ERROR: Postgres did not become reachable via port-forward"
-            exit 1
-          fi
           
           echo "Running Flyway validate..."
           docker run --rm \
             -v ${{ github.workspace }}/db/migrations:/flyway/sql \
-            -e FLYWAY_URL=jdbc:postgresql://localhost:5432/gollab_db \
+            --add-host=host.docker.internal:host-gateway
+            -e FLYWAY_URL=jdbc:postgresql://host.docker.internal:5432/gollab_db \
             -e FLYWAY_USER=${{ secrets.POSTGRES_USER }} \
             -e FLYWAY_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
             flyway/flyway:9.20.0 validate
@@ -121,7 +109,8 @@ jobs:
           echo "Running Flyway migrate..."
           docker run --rm \
             -v ${{ github.workspace }}/db/migrations:/flyway/sql \
-            -e FLYWAY_URL=jdbc:postgresql://localhost:5432/gollab_db \
+            --add-host=host.docker.internal:host-gateway
+            -e FLYWAY_URL=jdbc:postgresql://host.docker.internal:5432/gollab_db \
             -e FLYWAY_USER=${{ secrets.POSTGRES_USER }} \
             -e FLYWAY_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
             flyway/flyway:9.20.0 migrate
