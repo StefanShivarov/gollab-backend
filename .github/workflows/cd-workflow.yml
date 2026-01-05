@@ -89,10 +89,8 @@ jobs:
         run: |
           set -euo pipefail
           
-          echo "Waiting for Postgres pod and service endpoints..."
-          kubectl wait --for=condition=ready pod -l app=gollab-postgres -n ${{ env.K8S_NAMESPACE }} --timeout=120s
           for i in {1..60}; do
-            EP="$(kubectl get endpoints svc/gollab-postgres-service -n ${{ env.K8S_NAMESPACE }} -o jsonpath='{.subsets[*].addresses[*].ip}' || true)"
+            EP="$(kubectl get endpoints gollab-postgres-service -n ${{ env.K8S_NAMESPACE }} -o jsonpath='{.subsets[*].addresses[*].ip}' || true)"
             [ -n "$EP" ] && break
             sleep 2
           done
