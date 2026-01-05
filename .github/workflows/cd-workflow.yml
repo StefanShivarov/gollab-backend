@@ -110,16 +110,21 @@ jobs:
             exit 1
           fi
           
-          echo "Running Flyway migrations..."
+          echo "Running Flyway validate..."
           docker run --rm \
             -v ${{ github.workspace }}/db/migrations:/flyway/sql \
             -e FLYWAY_URL=jdbc:postgresql://localhost:5432/gollab_db \
             -e FLYWAY_USER=${{ secrets.POSTGRES_USER }} \
             -e FLYWAY_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
-            -e FLYWAY_CONNECT_RETRIES=10 \
-            flyway/flyway:9.20.0 \
-            sh -c "flyway validate && flyway migrate"
-  
+            flyway/flyway:9.20.0 validate
+
+          echo "Running Flyway migrate..."
+          docker run --rm \
+            -v ${{ github.workspace }}/db/migrations:/flyway/sql \
+            -e FLYWAY_URL=jdbc:postgresql://localhost:5432/gollab_db \
+            -e FLYWAY_USER=${{ secrets.POSTGRES_USER }} \
+            -e FLYWAY_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
+            flyway/flyway:9.20.0 migrate
 
       - name: Apply Backend resources
         run: kubectl apply -k k8s/backend
