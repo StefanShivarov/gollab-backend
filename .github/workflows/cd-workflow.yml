@@ -89,41 +89,24 @@ jobs:
         run: |
           set -euo pipefail
           
+          echo "Waiting for Postgres on localhost:5432..."
           for i in {1..60}; do
-            EP="$(kubectl get endpoints gollab-postgres-service -n ${{ env.K8S_NAMESPACE }} -o jsonpath='{.subsets[*].addresses[*].ip}' || true)"
-            [ -n "$EP" ] && break
-            sleep 2
+            (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 && break
+            sleep 1
           done
-          
-          echo "Starting port-forward..."
-          kubectl port-forward --address 127.0.0.1 -n ${{ env.K8S_NAMESPACE }} svc/gollab-postgres-service 5432:5432 >/tmp/pf.log 2>&1 &
-          PF_PID=$!
-          cleanup() { kill $PF_PID || true; }
-          trap cleanup EXIT
-          
-          echo "Waiting for 127.0.0.1:5432 to accept connections..."
-          for i in {1..60}; do
-            (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 && break || sleep 1
-          done
-          if ! kill -0 "$PF_PID" 2>/dev/null; then
-            echo "kubectl port-forward exited early:"; cat /tmp/pf.log || true; exit 1
-          fi
-          
-          PG_URL="jdbc:postgresql://127.0.0.1:5432/gollab_db"
+          PG_URL="jdbc:postgresql://localhost:5432/gollab_db"
           
           echo "Running Flyway validate..."
-          docker run --rm --network=host \
+          docker run --rm \
             -v ${{ github.workspace }}/db/migrations:/flyway/sql \
-            --add-host=host.docker.internal:host-gateway \
             -e FLYWAY_URL="$PG_URL" \
             -e FLYWAY_USER=${{ secrets.POSTGRES_USER }} \
             -e FLYWAY_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
             flyway/flyway:9.20.0 validate
 
           echo "Running Flyway migrate..."
-          docker run --rm --network=host \
+          docker run --rm \
             -v ${{ github.workspace }}/db/migrations:/flyway/sql \
-            --add-host=host.docker.internal:host-gateway \
             -e FLYWAY_URL="$PG_URL" \
             -e FLYWAY_USER=${{ secrets.POSTGRES_USER }} \
             -e FLYWAY_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \

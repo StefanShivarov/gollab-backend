@@ -4,9 +4,10 @@ metadata:
   name: gollab-postgres-service
   namespace: gollab-demo-namespace
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: gollab-postgres
   ports:
     - port: 5432
       targetPort: 5432
+      nodePort: 30032
