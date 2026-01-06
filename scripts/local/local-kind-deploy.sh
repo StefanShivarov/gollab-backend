@@ -63,16 +63,9 @@ done
 
 PG_URL="jdbc:postgresql://localhost:5432/gollab_db"
 
-echo "Running Flyway validate..."
-docker run --rm \
-  -v "$MIGRATIONS_PATH:/flyway/sql" \
-  -e FLYWAY_URL="$PG_URL" \
-  -e FLYWAY_USER="${DB_USER:-postgres}" \
-  -e FLYWAY_PASSWORD="${DB_PASS:-postgres}" \
-  flyway/flyway:9.20.0 validate
-
 echo "Running Flyway migrate..."
 docker run --rm \
+  --network=host \
   -v "$MIGRATIONS_PATH:/flyway/sql" \
   -e FLYWAY_URL="$PG_URL" \
   -e FLYWAY_USER="${DB_USER:-postgres}" \
