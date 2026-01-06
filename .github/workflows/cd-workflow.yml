@@ -98,6 +98,7 @@ jobs:
           
           echo "Running Flyway validate..."
           docker run --rm \
+            --network=host \
             -v ${{ github.workspace }}/db/migrations:/flyway/sql \
             -e FLYWAY_URL="$PG_URL" \
             -e FLYWAY_USER=${{ secrets.POSTGRES_USER }} \
@@ -106,6 +107,7 @@ jobs:
 
           echo "Running Flyway migrate..."
           docker run --rm \
+            --network=host \
             -v ${{ github.workspace }}/db/migrations:/flyway/sql \
             -e FLYWAY_URL="$PG_URL" \
             -e FLYWAY_USER=${{ secrets.POSTGRES_USER }} \
